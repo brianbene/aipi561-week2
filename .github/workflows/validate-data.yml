@@ -1,0 +1,56 @@
+﻿name: Data Quality Validation
+
+on:
+  schedule:
+    # Run every hour — fast enough to catch issues before they affect a full day
+    # of predictions, without the cost of per-commit runs on a large dataset.
+    - cron: '0 * * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'week3/data/**'
+      - 'week3/validation/**'
+      - 'week3/backend/data.py'
+  workflow_dispatch:   # allow manual trigger from GitHub Actions UI
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true   # pull Git LFS files (parquet data)
+
+      - name: Pull LFS files
+        run: git lfs pull
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pandas numpy pyarrow pytest lightgbm>=4.5.0
+
+      - name: Run data quality validation
+        id: validate
+        run: |
+          python week3/validation/check_data_quality.py week3/data
+        # Exit code 1 = validation failed = workflow fails = deployment blocked
+
+      - name: Run data quality tests
+        run: |
+          python -m pytest week3/validation/test_data_quality.py -v --tb=short
+
+      - name: Report validation failure
+        if: failure()
+        run: |
+          echo "=========================================="
+          echo "DATA VALIDATION FAILED — deployment blocked"
+          echo "Check the validation step above for details"
+          echo "Fix data issues before merging to main"
+          echo "=========================================="
+          exit 1
