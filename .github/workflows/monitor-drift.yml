@@ -1,0 +1,88 @@
+﻿name: Drift Monitoring
+
+on:
+  schedule:
+    - cron: '0 8 * * *'   # daily at 8 AM UTC
+  push:
+    branches: [main]
+    paths:
+      - 'week4/data/**'
+      - 'week4/scripts/**'
+  workflow_dispatch:
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - run: git lfs pull
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pandas numpy scipy pyarrow
+
+      - name: Compute monitoring metrics
+        id: metrics
+        run: |
+          python week4/scripts/compute_metrics.py
+        continue-on-error: true
+
+      - name: Detect drift patterns
+        id: drift
+        run: |
+          python week4/scripts/detect_drift.py
+        continue-on-error: true
+
+      - name: Run monitoring tests
+        run: |
+          pip install pytest
+          python -m pytest week4/scripts/test_monitoring.py -v --tb=short
+
+      - name: Create GitHub issue if drift detected
+        if: steps.drift.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'DRIFT ALERT: Significant drift detected in Feb 2026 data',
+              body: [
+                '## Drift Detection Alert',
+                '',
+                'The scheduled drift monitoring job detected significant drift.',
+                '',
+                '**Triggered by:** ' + context.eventName,
+                '**Run:** ' + context.runId,
+                '',
+                '### Patterns Detected',
+                '1. Trip count distribution shift (PSI=0.77, KS=0.52)',
+                '2. CBD congestion pricing activation (0.0 -> 1.0, concept drift)',
+                '3. Lag feature cascade — all lag/rolling PSI > 0.84',
+                '4. Zone expansion 1 -> 57 zones, correlation drop 0.87 -> 0.71',
+                '',
+                '### Recommended Action',
+                'Retrain the LightGBM model on Feb 2026 data including new zones.',
+                'Validate new model beats current on holdout set before deploying.',
+                '',
+                '[View workflow run](https://github.com/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId + ')'
+              ].join('\n'),
+              labels: ['drift-alert', 'retraining-needed']
+            })
+
+      - name: Report final status
+        if: always()
+        run: |
+          echo "Metrics step: ${{ steps.metrics.outcome }}"
+          echo "Drift step:   ${{ steps.drift.outcome }}"
+          if [ "${{ steps.drift.outcome }}" = "failure" ]; then
+            echo "DRIFT DETECTED — retraining recommended"
+            exit 1
+          fi
