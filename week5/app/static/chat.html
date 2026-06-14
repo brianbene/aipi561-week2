@@ -1,0 +1,97 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>TechCorp Knowledge Agent</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; background: #f5f5f5; }
+        h1 { color: #1a237e; }
+        #chatbox { background: white; border-radius: 8px; padding: 20px; height: 450px; overflow-y: auto; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .message { margin: 10px 0; padding: 10px 15px; border-radius: 8px; max-width: 80%; clear: both; }
+        .user { background: #1a237e; color: white; float: right; text-align: right; }
+        .agent { background: #e8eaf6; color: #1a237e; float: left; }
+        .meta { font-size: 11px; color: #888; margin-top: 4px; }
+        .clear { clear: both; }
+        #inputrow { display: flex; gap: 10px; margin-top: 10px; }
+        #question { flex: 1; padding: 12px; border: 2px solid #1a237e; border-radius: 6px; font-size: 15px; }
+        #role { padding: 12px; border: 2px solid #1a237e; border-radius: 6px; }
+        #sendbtn { padding: 12px 24px; background: #1a237e; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; }
+        #sendbtn:hover { background: #283593; }
+        #metrics { background: white; border-radius: 8px; padding: 12px 20px; font-size: 13px; color: #555; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>TechCorp Knowledge Agent</h1>
+    <div id="chatbox"></div>
+    <div id="inputrow">
+        <input id="question" type="text" placeholder="Ask a question about TechCorp policies..."/>
+        <select id="role">
+            <option value="engineer">Engineer</option>
+            <option value="manager">Manager</option>
+            <option value="hr">HR</option>
+            <option value="admin">Admin</option>
+        </select>
+        <button id="sendbtn" onclick="sendQuery()">Send</button>
+    </div>
+    <div id="metrics">Total queries: 0 | Total tokens: 0 | Total cost: $0.000000</div>
+    <script>
+        document.getElementById("question").addEventListener("keydown", function(e) {
+            if (e.key === "Enter") sendQuery();
+        });
+        async function sendQuery() {
+            var question = document.getElementById("question").value.trim();
+            var role = document.getElementById("role").value;
+            if (!question) return;
+            addMessage(question, "user", null);
+            document.getElementById("question").value = "";
+            addMessage("Thinking...", "agent", null);
+            try {
+                var response = await fetch("/agent/query", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({"question": question, "user_role": role})
+                });
+                var data = await response.json();
+                removeThinking();
+                addMessage(data.answer, "agent", "Tokens: " + data.tokens_used + " | Cost: $" + data.cost.toFixed(6) + " | Role: " + data.role);
+                updateMetrics();
+            } catch(e) {
+                removeThinking();
+                addMessage("Error: " + e.message, "agent", null);
+            }
+        }
+        function addMessage(text, cls, meta) {
+            var box = document.getElementById("chatbox");
+            var div = document.createElement("div");
+            div.className = "message " + cls;
+            div.innerHTML = text.replace(/\n/g, "<br>").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+            if (meta) {
+                var m = document.createElement("div");
+                m.className = "meta";
+                m.textContent = meta;
+                div.appendChild(m);
+            }
+            box.appendChild(div);
+            var c = document.createElement("div");
+            c.className = "clear";
+            box.appendChild(c);
+            box.scrollTop = box.scrollHeight;
+        }
+        function removeThinking() {
+            var msgs = document.querySelectorAll(".message.agent");
+            for (var i = msgs.length - 1; i >= 0; i--) {
+                if (msgs[i].innerHTML.indexOf("Thinking") !== -1) {
+                    msgs[i].nextSibling.remove();
+                    msgs[i].remove();
+                    break;
+                }
+            }
+        }
+        async function updateMetrics() {
+            var r = await fetch("/agent/metrics");
+            var m = await r.json();
+            document.getElementById("metrics").textContent =
+                "Total queries: " + m.total_queries + " | Total tokens: " + m.total_tokens + " | Total cost: $" + m.total_cost.toFixed(6) + " | Avg per query: $" + m.avg_cost_per_query.toFixed(6);
+        }
+    </script>
+</body>
+</html>
