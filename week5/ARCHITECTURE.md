@@ -1,4 +1,4 @@
-ï»¿# TechCorp Knowledge Agent â€” Architecture Document
+# TechCorp Knowledge Agent — Architecture Document
 
 ## System Overview
 
@@ -29,7 +29,7 @@ questions about TechCorp employees, policies, and expenses.
 - Purpose: Search 74 TechCorp policy documents by keyword
 - Data source: documents.json loaded at startup
 - Parameters: query (keyword string), limit (max results, default 3)
-- Retrieval method: Keyword scoring â€” counts matching words across title, content, category
+- Retrieval method: Keyword scoring — counts matching words across title, content, category
 - Returns: JSON array with document id, title, category, and 500-char snippet
 
 ### expense_query
@@ -104,6 +104,6 @@ reasoning tasks.
 
 - Policy search is keyword-based; semantic queries may miss relevant documents
 - Daily free tier quota limits testing (20 requests/day on free tier)
-- No caching â€” identical queries make full LLM calls each time
+- No caching — identical queries make full LLM calls each time
 - No persistent conversation history between sessions
 - Role enforcement is prompt-based, not enforced at the tool level
