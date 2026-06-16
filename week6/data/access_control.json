@@ -1,0 +1,62 @@
+﻿{
+  "roles": {
+    "engineer": {
+      "permissions": {
+        "documents": ["api_docs", "deployment_guides", "engineering"],
+        "fields": ["name", "email", "department", "role"]
+      }
+    },
+    "manager": {
+      "permissions": {
+        "documents": ["all"],
+        "fields": ["name", "email", "department", "role", "id"]
+      }
+    },
+    "hr": {
+      "permissions": {
+        "documents": ["all"],
+        "fields": ["all"]
+      }
+    },
+    "finance": {
+      "permissions": {
+        "documents": ["finance", "expense_reports", "budgets"],
+        "fields": ["name", "department", "role", "salary"]
+      }
+    },
+    "executive": {
+      "permissions": {
+        "documents": ["all"],
+        "fields": ["all"]
+      }
+    }
+  },
+  "sensitive_fields": {
+    "salary": {
+      "visibility": ["hr", "finance", "executive"],
+      "redact": true
+    },
+    "ssn": {
+      "visibility": ["hr"],
+      "redact": true
+    },
+    "medical_info": {
+      "visibility": ["hr"],
+      "redact": true
+    },
+    "bonus": {
+      "visibility": ["hr", "executive"],
+      "redact": true
+    }
+  },
+  "document_categories": {
+    "api_docs": ["engineer", "manager", "hr", "finance", "executive"],
+    "deployment_guides": ["engineer", "manager", "executive"],
+    "engineering": ["engineer", "manager", "executive"],
+    "finance": ["finance", "manager", "executive"],
+    "expense_reports": ["finance", "manager", "executive", "hr"],
+    "budgets": ["finance", "executive"],
+    "hr_policies": ["hr", "manager", "executive"],
+    "compliance": ["hr", "finance", "executive", "manager"]
+  }
+}
