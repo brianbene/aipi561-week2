@@ -1,0 +1,47 @@
+[
+  {
+    "original_query": "What is the travel policy for flights over 8 hours?",
+    "original_answer": "There is no specific policy for 8+ hour flights.",
+    "corrected_answer": "Employees can book business class for flights over 8 hours with manager approval.",
+    "user_role": "manager",
+    "accepted": true,
+    "reason": "Correction accepted: sufficient authority and added detail.",
+    "timestamp": "2026-06-18T11:31:54.634228"
+  },
+  {
+    "original_query": "What is the SSN format?",
+    "original_answer": "SSNs are 9 digits.",
+    "corrected_answer": "SSNs follow the format XXX-XX-XXXX.",
+    "user_role": "engineer",
+    "accepted": false,
+    "reason": "Role 'engineer' (authority level 1) lacks sufficient authority; manager-level (3) or above required.",
+    "timestamp": "2026-06-18T11:31:54.634228"
+  },
+  {
+    "original_query": "What is the compensation policy?",
+    "original_answer": "Compensation is reviewed annually based on performance, market data, and budget, with detailed bands per level.",
+    "corrected_answer": "Reviewed yearly.",
+    "user_role": "executive",
+    "accepted": false,
+    "reason": "Corrected answer is not more detailed than the original (16 chars vs 111 chars).",
+    "timestamp": "2026-06-18T11:31:54.634228"
+  },
+  {
+    "original_query": "What medical benefits are available?",
+    "original_answer": "Some benefits exist.",
+    "corrected_answer": "Employees have access to medical, dental, and vision coverage, plus an HSA match up to $1000/year.",
+    "user_role": "hr",
+    "accepted": false,
+    "reason": "Role 'hr' (authority level 2) lacks sufficient authority; manager-level (3) or above required.",
+    "timestamp": "2026-06-18T11:31:54.634228"
+  },
+  {
+    "original_query": "What is the per diem rate for international travel?",
+    "original_answer": "It varies.",
+    "corrected_answer": "International per diem rates are set per destination city following the GSA foreign rate table, updated quarterly.",
+    "user_role": "executive",
+    "accepted": true,
+    "reason": "Correction accepted: sufficient authority and added detail.",
+    "timestamp": "2026-06-18T11:31:54.634228"
+  }
+]
